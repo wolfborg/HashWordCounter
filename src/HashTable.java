@@ -1,3 +1,5 @@
+import java.util.List;
+
 
 /**
  * @author chaplind
@@ -10,11 +12,12 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 		private S key;
 		private T value;
 		private boolean inTable;
+		private List<T> chain;
 		
 		private TableEntry(S searchKey, T dataValue)
 		{
 			key = searchKey;
-			value = dataValue;
+			chain.add(dataValue);
 			inTable = true;
 		}
 		
@@ -86,6 +89,7 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 		return result;
 	}
 	
+	
 	public HashTable()
 	{
 		this(DEFAULT_SIZE);
@@ -126,7 +130,7 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 	{
 		V oldValue;
 		
-		if(isHashTableFull()){
+		if(isFull()){
 			rehash();
 		}
 		
@@ -174,8 +178,12 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 		}
 	}
 
-	private boolean isHashTableFull() {
-		// TODO Auto-generated method stub
+	private boolean isFull()
+	{
+		if(hashTable.length==numberOfEntries){
+			return true;
+		}
+		
 		return false;
 	}
 
