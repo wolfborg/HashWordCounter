@@ -176,6 +176,12 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 		V result = hashTable[index].getValue(key);
 		return result;
 	}
+	
+	public void setValue(K key, V newValue)
+	{
+		int index = getHashIndex(key);
+		hashTable[index].setValue(key, newValue);
+	}
 
 	public int getHashIndex(K key)
 	{
@@ -191,11 +197,13 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 
 	public boolean contains(K key)
 	{
-		int index = getHashIndex(key);
-		int result = hashTable[index].searchChain(key);
-		
-		if(result!=-1){
-			return true;
+		if(key!=null){
+			int index = getHashIndex(key);
+			int result = hashTable[index].searchChain(key);
+			
+			if(result!=-1){
+				return true;
+			}
 		}
 		
 		return false;
@@ -213,6 +221,10 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 	public int getSize()
 	{
 		return numberOfEntries;
+	}
+	
+	public void setSize(int newSize){
+		numberOfEntries = newSize;
 	}
 
 	public void clear()

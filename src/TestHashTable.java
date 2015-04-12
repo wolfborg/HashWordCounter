@@ -46,6 +46,8 @@ public class TestHashTable
 		testGetSize(test,0);
 		
 		test.display();
+		testAdd(test,"testing",1);
+		testContains(test,"testing",true);
 	}
 	
 	
