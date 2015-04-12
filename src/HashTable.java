@@ -1,3 +1,4 @@
+import java.util.LinkedList;
 import java.util.List;
 
 
@@ -7,18 +8,15 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class HashTable<K,V> implements HashTableInterface<K,V>
 {
-	private class TableEntry<S,T>
+	private class Node<S,T>
 	{
 		private S key;
 		private T value;
-		private boolean inTable;
-		private List<T> chain;
 		
-		private TableEntry(S searchKey, T dataValue)
+		private Node(S searchKey, T dataValue)
 		{
 			key = searchKey;
-			chain.add(dataValue);
-			inTable = true;
+			value = dataValue;
 		}
 		
 		private S getKey()
@@ -31,33 +29,64 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 			return value;
 		}
 		
-		private void setValue(T newDataValue)
+		private void setValue(T newValue)
 		{
-			value = newDataValue;
+			value = newValue;
 		}
 		
-		private boolean isIn()
+	}
+	
+	private class TableEntry<S,T>
+	{
+		private List<Node<S,T>> chain;
+		
+		private TableEntry(S searchKey, T startChainValue)
 		{
-			return inTable;
+			chain = new LinkedList<Node<S,T>>();
+			chain.add(new Node<S,T>(searchKey,startChainValue));
 		}
 		
-		private boolean isRemoved()
+		private T getValue(S searchKey)
 		{
-			if(!isIn()){
+			T result = null;
+			
+			int position = searchChain(searchKey);
+			
+			if(position!=-1){
+				result = chain.get(position).getValue();
+			}
+			
+			return result;
+		}
+		
+		private void setValue(S searchKey, T newValue)
+		{
+			if(isIn(searchKey)){
+				int position = searchChain(searchKey);
+				chain.get(position).setValue(newValue);
+			}
+		}
+		
+		private int searchChain(S searchKey)
+		{
+			int result = -1;
+			
+			for(int i=0;i<chain.size();i++){
+				if((chain.get(i).getKey()).equals(searchKey)){
+					result = i;
+				}
+			}
+			
+			return result;
+		}
+		
+		private boolean isIn(S searchKey)
+		{
+			if(searchChain(searchKey)!=-1){
 				return true;
 			}
 			
 			return false;
-		}
-		
-		private void setToIn()
-		{
-			inTable = true;
-		}
-		
-		private void setToRemoved()
-		{
-			inTable = false;
 		}
 	}
 	
@@ -67,28 +96,6 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 	private int locationsUsed;
 	private static final int DEFAULT_SIZE = 101;
 	private static final double MAX_LOAD_FACTOR = 0.5;
-	
-	private int locate(int index, K key)
-	{
-		int result = -1;
-		boolean found = false;
-		
-		while(!found && (hashTable[index] != null))
-		{
-			if(hashTable[index].isIn() && key.equals(hashTable[index].getKey())){
-				found = true;
-			}else{
-				index = (index+1)%hashTable.length;
-			}
-		}
-		
-		if(found){
-			result = index;
-		}
-		
-		return result;
-	}
-	
 	
 	public HashTable()
 	{
@@ -128,82 +135,18 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 
 	public V add(K key, V value)
 	{
-		V oldValue;
-		
-		if(isFull()){
-			rehash();
-		}
-		
 		int index = getHashIndex(key);
-		index = probe(index,key);
 		
-		if((hashTable[index]==null)||(hashTable[index].isRemoved())){
+		if((hashTable[index]==null)||!(hashTable[index].isIn(key))){
 			hashTable[index] = new TableEntry<K,V>(key,value);
 			numberOfEntries++;
 			locationsUsed++;
-			oldValue = null;
 		}else{
-			oldValue = hashTable[index].getValue();
-			hashTable[index].setValue(value);
+			int position = hashTable[index].searchChain(key);
+			hashTable[index].setValue(key, value);
 		}
 		
-		return oldValue;
-	}
-
-	private int probe(int index, K key)
-	{
-		int removedStateIndex = -1;
-		boolean found = false;
-		
-		while(!found && (hashTable[index]!=null)){
-			if(hashTable[index].isIn()){
-				if(key.equals(hashTable[index].getKey())){
-					found = true;
-				}else{
-					index = (index+1)%hashTable.length;
-				}
-			}else{
-				if(removedStateIndex == -1){
-					removedStateIndex = index;
-				}
-				
-				index = (index+1)%hashTable.length;
-			}
-		}
-		
-		if(found||(removedStateIndex == -1)){
-			return index;
-		}else{
-			return removedStateIndex;
-		}
-	}
-
-	private boolean isFull()
-	{
-		if(hashTable.length==numberOfEntries){
-			return true;
-		}
-		
-		return false;
-	}
-
-	@SuppressWarnings("unchecked")
-	private void rehash()
-	{
-		TableEntry<K,V>[] oldTable = hashTable;
-		
-		int oldSize = oldTable.length;
-		int newSize = getNextPrime(oldSize*2);
-		
-		hashTable = new TableEntry[newSize];
-		numberOfEntries = 0;
-		locationsUsed = 0;
-		
-		for(int i=0;i<oldSize;i++){
-			if((oldTable[i]!=null)&&(oldTable[i].isIn())){
-				add(oldTable[i].getKey(), oldTable[i].getValue());
-			}
-		}
+		return hashTable[index].getValue(key);
 	}
 
 	public V remove(K key)
@@ -211,11 +154,11 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 		V removedValue = null;
 		
 		int index = getHashIndex(key);
-		index = locate(index,key);
+		int position = hashTable[index].searchChain(key);
 		
 		if(index != -1){
-			removedValue = hashTable[index].getValue();
-			hashTable[index].setToRemoved();
+			removedValue = hashTable[index].chain.get(position).getValue();
+			hashTable[index].chain.remove(position);
 			numberOfEntries--;
 		}
 		
@@ -224,15 +167,8 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 
 	public V getValue(K key)
 	{
-		V result = null;
-		
 		int index = getHashIndex(key);
-		index = locate(index,key);
-		
-		if(index != -1){
-			result = hashTable[index].getValue();
-		}
-		
+		V result = hashTable[index].getValue(key);
 		return result;
 	}
 
@@ -245,7 +181,11 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 	public boolean contains(K key)
 	{
 		int index = getHashIndex(key);
+		int result = hashTable[index].searchChain(key);
 		
+		if(result!=-1){
+			return true;
+		}
 		
 		return false;
 	}
@@ -266,9 +206,9 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 
 	public void clear()
 	{
-		int index = 0;
+		int index = 1;
 		while(!isEmpty()){
-			remove(hashTable[index].getKey());
+			hashTable[index].chain.clear();
 			index++;
 		}
 	}
