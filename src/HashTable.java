@@ -137,13 +137,18 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 	{
 		int index = getHashIndex(key);
 		
-		if((hashTable[index]==null)||!(hashTable[index].isIn(key))){
+		if(hashTable[index]==null){
 			hashTable[index] = new TableEntry<K,V>(key,value);
 			numberOfEntries++;
 			locationsUsed++;
 		}else{
-			int position = hashTable[index].searchChain(key);
-			hashTable[index].setValue(key, value);
+			if(!hashTable[index].isIn(key)){
+				hashTable[index].chain.add(new Node<K,V>(key,value));
+				numberOfEntries++;
+			}else{
+				int position = hashTable[index].searchChain(key);
+				hashTable[index].chain.get(position).setValue(value);
+			}
 		}
 		
 		return hashTable[index].getValue(key);
@@ -175,7 +180,13 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 	public int getHashIndex(K key)
 	{
 		String s = key.toString();
-		return s.hashCode() % hashTable.length;
+		int index = s.hashCode() % hashTable.length;
+		
+		if(index<0){
+			index += hashTable.length;
+		}
+		
+		return index;
 	}
 
 	public boolean contains(K key)
@@ -206,10 +217,33 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 
 	public void clear()
 	{
-		int index = 1;
-		while(!isEmpty()){
-			hashTable[index].chain.clear();
-			index++;
+		for(int i=0;i<hashTable.length;i++){
+			if(isEmpty()){
+				break;
+			}else{
+				hashTable[i] = null;
+				numberOfEntries--;
+			}
 		}
+	}
+	
+	public void display()
+	{
+		if(numberOfEntries>0){
+			for(int i=0;i<hashTable.length;i++){
+				if(hashTable[i]!=null){
+					for(int j=0;j<hashTable[i].chain.size();j++){
+						System.out.println(
+						"Index: "+i+", "+
+						"Key: '"+hashTable[i].chain.get(j).getKey()+"', "+
+						"Value: "+hashTable[i].chain.get(j).getValue());
+					}
+				}
+			}
+		}else{
+			System.out.println("Hash table is empty.");
+		}
+		
+		System.out.println();
 	}
 }
