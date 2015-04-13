@@ -4,6 +4,8 @@ public class TestHashTable
 	public static void main(String[] args)
 	{
 		HashTable<String,Integer> test = new HashTable<String,Integer>();
+
+		test.contains("test");
 		
 		test.display();
 		testIsEmpty(test,true);
@@ -48,6 +50,8 @@ public class TestHashTable
 		test.display();
 		testAdd(test,"testing",1);
 		testContains(test,"testing",true);
+		
+		test.contains("test");
 	}
 	
 	

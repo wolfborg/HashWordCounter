@@ -40,9 +40,13 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 	{
 		private List<Node<S,T>> chain;
 		
-		private TableEntry(S searchKey, T startChainValue)
+		private TableEntry()
 		{
 			chain = new LinkedList<Node<S,T>>();
+		}
+		
+		private TableEntry(S searchKey, T startChainValue)
+		{
 			chain.add(new Node<S,T>(searchKey,startChainValue));
 		}
 		
@@ -107,6 +111,11 @@ public class HashTable<K,V> implements HashTableInterface<K,V>
 	{
 		int primeSize = getNextPrime(tableSize);
 		hashTable = new TableEntry[primeSize];
+		
+		for(int i=0;i<primeSize;i++){
+			hashTable[i] = new TableEntry<K,V>();
+		}
+		
 		numberOfEntries = 0;
 		locationsUsed = 0;
 	}
